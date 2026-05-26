@@ -7,7 +7,6 @@ namespace App\Entity;
 use App\Repository\PageRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\Common\Collections\Criteria;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -236,10 +235,16 @@ class Page
     /** @return Collection<int, SectionBlock> */
     public function getEnabledSections(): Collection
     {
-        return $this->sections->matching(
-            Criteria::create()
-                ->where(Criteria::expr()->eq('isEnabled', true))
-                ->orderBy(['position' => Criteria::ASC])
+        $blocks = array_values(array_filter(
+            $this->sections->toArray(),
+            static fn (SectionBlock $s): bool => $s->isEnabled(),
+        ));
+
+        usort(
+            $blocks,
+            static fn (SectionBlock $a, SectionBlock $b): int => $a->getPosition() <=> $b->getPosition(),
         );
+
+        return new ArrayCollection($blocks);
     }
 }

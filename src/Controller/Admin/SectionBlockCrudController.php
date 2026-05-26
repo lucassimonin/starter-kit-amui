@@ -40,12 +40,15 @@ class SectionBlockCrudController extends AbstractCrudController
             ->setDefaultSort(['position' => 'ASC', 'id' => 'ASC'])
             ->showEntityActionsInlined()
             ->setHelp('index', 'Astuce : les champs « Contenu visuel » et « Boutons » alimentent automatiquement le JSON. '
-                .'Laissez vides les champs non utilisés par votre type de section.');
+                .'Laissez vides les champs non utilisés par votre type de section. '
+                .'Pour l’ordre sur le site public, éditez « Ordre d’affichage » sur chaque bloc : '
+                .'tri manuel ou tri des colonnes dans ce tableau **ne réordonne pas** les sections en front-office.');
     }
 
     public function configureActions(Actions $actions): Actions
     {
         return parent::configureActions($actions)
+            ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->add(Crud::PAGE_EDIT, Action::DETAIL)
             ->reorder(Crud::PAGE_INDEX, [Action::EDIT, Action::DETAIL, Action::DELETE]);
     }
