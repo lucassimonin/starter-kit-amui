@@ -7,9 +7,11 @@ namespace App\Form\Admin;
 use App\Service\PublicFileUploader;
 use EasyCorp\Bundle\EasyAdminBundle\Form\Type\TextEditorType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\ColorType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
@@ -18,7 +20,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Colonne pied (WYSIWYG) / réseaux sociaux. Marque bandeau + © suivent toujours le JSON stocké hors de ce formulaire.
+ * Colonne pied (WYSIWYG) / réseaux sociaux / favicon / bandeau cookies. Marque bandeau + © peuvent être maintenus hors formulaire via le JSON en fiche détail.
  */
 final class FooterSiteChromeFormType extends AbstractType
 {
@@ -112,6 +114,36 @@ final class FooterSiteChromeFormType extends AbstractType
                 'property_path' => '[themeColor]',
                 'required' => false,
                 'help' => 'Méta <code>theme-color</code> pour les navigateurs compatibles.',
+            ])
+            ->add('cookieBannerEnabled', CheckboxType::class, [
+                'label' => 'Afficher le bandeau cookies (bas de page)',
+                'property_path' => '[cookieBannerEnabled]',
+                'required' => false,
+            ])
+            ->add('cookieBannerMessage', TextareaType::class, [
+                'label' => 'Message du bandeau cookies',
+                'property_path' => '[cookieBannerMessage]',
+                'required' => false,
+                'attr' => ['rows' => 4],
+                'help' => 'Texte court et clair pour les visiteurs. Laissé vide : message par défaut côté site.',
+            ])
+            ->add('cookieAcceptLabel', TextType::class, [
+                'label' => 'Libellé bouton « accepter »',
+                'property_path' => '[cookieAcceptLabel]',
+                'required' => false,
+                'help' => 'Vide = « J’accepte ».',
+            ])
+            ->add('cookieMoreLabel', TextType::class, [
+                'label' => 'Libellé lien (politique / mentions)',
+                'property_path' => '[cookieMoreLabel]',
+                'required' => false,
+                'help' => 'Affiché seulement si une URL est renseignée ci‑dessous. Vide = « En savoir plus ».',
+            ])
+            ->add('cookiePolicyUrl', TextType::class, [
+                'label' => 'URL de la page d’informations (optionnel)',
+                'property_path' => '[cookiePolicyUrl]',
+                'required' => false,
+                'help' => 'Chemin relatif ou URL HTTPS (ex. <code>/mentions-legales</code>).',
             ]);
 
         $builder->addEventListener(
@@ -177,6 +209,42 @@ final class FooterSiteChromeFormType extends AbstractType
                     $merged['themeColor'] = trim($themeColor);
                 } else {
                     unset($merged['themeColor']);
+                }
+
+                unset(
+                    $merged['cookieBannerEnabled'],
+                    $merged['cookieBannerMessage'],
+                    $merged['cookieAcceptLabel'],
+                    $merged['cookieMoreLabel'],
+                    $merged['cookiePolicyUrl'],
+                );
+
+                $cookieEnabled = false;
+                if (isset($incoming['cookieBannerEnabled'])) {
+                    $raw = $incoming['cookieBannerEnabled'];
+                    $cookieEnabled = true === $raw || 1 === $raw || '1' === $raw || 'on' === $raw;
+                }
+
+                if ($cookieEnabled) {
+                    $merged['cookieBannerEnabled'] = true;
+
+                    $cookieMsg = $incoming['cookieBannerMessage'] ?? null;
+                    if (\is_string($cookieMsg) && '' !== trim($cookieMsg)) {
+                        $merged['cookieBannerMessage'] = trim($cookieMsg);
+                    }
+
+                    foreach (
+                        [
+                            'cookieAcceptLabel' => 'cookieAcceptLabel',
+                            'cookieMoreLabel' => 'cookieMoreLabel',
+                            'cookiePolicyUrl' => 'cookiePolicyUrl',
+                        ] as $incomingKey => $storageKey
+                    ) {
+                        $val = $incoming[$incomingKey] ?? null;
+                        if (\is_string($val) && '' !== trim($val)) {
+                            $merged[$storageKey] = trim($val);
+                        }
+                    }
                 }
 
                 $event->setData([] === $merged ? null : $merged);

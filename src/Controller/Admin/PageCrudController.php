@@ -136,8 +136,8 @@ final class PageCrudController extends AbstractCrudController
             ->hideOnIndex()
             ->onlyOnForms()
             ->setHelp(
-                'Bloc gauche du pied de page en éditeur riche ; liens réseaux ; favicon, '
-                .'Apple Touch et couleur de thème pour le navigateur.'
+                'Pied de page, réseaux, favicon ; bandeau cookies en bas du site '
+                .'(activation + textes dans ce même formulaire).'
             );
         yield ArrayField::new('footerPayload', 'Chrome site (JSON — lecture)')
             ->onlyOnDetail()

@@ -63,6 +63,10 @@ final class StarterWebsiteFixtures extends Fixture
                 'faviconHref' => '/images/amui-studio-logo.png',
                 'appleTouchIcon' => '/images/amui-studio-logo.png',
                 'themeColor' => '#000000',
+                'cookieBannerEnabled' => true,
+                'cookieBannerMessage' =>
+                    'Nous utilisons des cookies techniques pour faire fonctionner cette démo localement. '
+                    .'Pas de pistage publicitaire dans ce Starter Kit.',
             ]);
 
         $hero = new SectionBlock();

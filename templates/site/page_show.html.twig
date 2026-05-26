@@ -23,3 +23,7 @@
 {% block footer %}
     {% include 'site/_footer.html.twig' %}
 {% endblock %}
+
+{% block cookie_banner %}
+    {% include 'site/_cookie_banner.html.twig' with { footer: page.footerPayload ?? {} } only %}
+{% endblock %}

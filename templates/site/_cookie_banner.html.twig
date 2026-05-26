@@ -1,0 +1,69 @@
+{# Basic cookie strip — enable via footer JSON cookieBannerEnabled (admin « Bandeau & pied »). #}
+{% if footer.cookieBannerEnabled is defined and footer.cookieBannerEnabled %}
+    {% set cookie_text = footer.cookieBannerMessage|default('Nous utilisons des cookies pour le bon fonctionnement du site. En continuant, vous acceptez leur utilisation.') %}
+    {% set btn_label = footer.cookieAcceptLabel|default('J’accepte') %}
+    {% set more_label = footer.cookieMoreLabel|default('En savoir plus') %}
+    {% set policy = footer.cookiePolicyUrl|default(null) %}
+    <div
+        id="site-cookie-banner"
+        class="fixed bottom-0 left-0 right-0 z-[100] hidden border-t border-ink/15 bg-paper/95 px-4 py-4 shadow-[0_-8px_32px_rgba(0,0,0,0.08)] backdrop-blur-sm"
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby="site-cookie-banner-title"
+        aria-describedby="site-cookie-banner-desc"
+    >
+        <div class="stack mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <div class="min-w-0 flex-1">
+                <p id="site-cookie-banner-title" class="font-display text-sm font-bold text-ink">
+                    Cookies
+                </p>
+                <p id="site-cookie-banner-desc" class="mt-1 font-body text-sm leading-relaxed text-ink/80">
+                    {{ cookie_text|e }}
+                    {% if policy %}
+                        <a href="{{ policy|e('html_attr') }}" class="ml-1 font-medium text-accent underline-offset-2 hover:underline">
+                            {{ more_label|e }}
+                        </a>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="flex shrink-0 flex-wrap items-center gap-3 sm:justify-end">
+                <button
+                    type="button"
+                    id="site-cookie-banner-accept"
+                    class="inline-flex items-center justify-center border border-ink bg-ink px-4 py-2.5 text-sm font-semibold text-paper transition-colors duration-200 hover:border-accent hover:bg-accent focus-visible:border-accent focus-visible:bg-accent"
+                >
+                    {{ btn_label|e }}
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var root = document.getElementById('site-cookie-banner');
+            if (!root) {
+                return;
+            }
+            var KEY = 'starter_kit_cookie_consent_v1';
+            try {
+                if (window.localStorage.getItem(KEY) === '1') {
+                    root.remove();
+                    return;
+                }
+            } catch (e) {
+                /* ignore */
+            }
+            root.classList.remove('hidden');
+            var btn = document.getElementById('site-cookie-banner-accept');
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    try {
+                        window.localStorage.setItem(KEY, '1');
+                    } catch (e2) {
+                        /* ignore */
+                    }
+                    root.remove();
+                });
+            }
+        });
+    </script>
+{% endif %}
