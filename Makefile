@@ -23,6 +23,8 @@ install: start ## Install the entire project (Vendor + Dev database + Test datab
 	$(EXEC_PHP) composer install
 	$(EXEC_PHP) composer auto-scripts
 	@$(MAKE) build-assets
+	@sleep 5
+	@$(MAKE) reset-db
 	@$(MAKE) reset-test
 	@echo "✅ Projet installé et prêt !"
 
@@ -47,7 +49,9 @@ clean: ## Drop les BDD dev + test puis purge caches, logs Symfony (Docker doit �
 	@echo "✅ Clean terminé. Exemple : « make install && make reset-db »"
 	@echo "   (install recrée la BDD de test ; reset-db régénère la BDD développement + fixtures)"
 
-reinstall: clean install reset-db ## clean + deps/assets + BDD test & dev (migrate + fixtures dev)
+reinstall:
+	@$(MAKE) clean
+	@$(MAKE) install
 
 ## ——— BDD ———
 
