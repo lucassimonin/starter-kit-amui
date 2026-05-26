@@ -1,0 +1,37 @@
+services:
+  php:
+    env_file:
+      - .env.local
+    build:
+      context: .
+      target: frankenphp_prod
+    restart: always
+    volumes:
+      # NO source mount in prod - code is baked into the image
+        - ./:/app
+        - caddy_data:/data
+        - caddy_config:/config
+        - ./docker/frankenphp/Caddyfile:/etc/frankenphp/Caddyfile
+    environment:
+      APP_ENV: prod
+      APP_SECRET: ${APP_SECRET}
+      SERVER_NAME: poplayer.fr, www.poplayer.fr
+
+  database:
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+
+  rabbitmq:
+    restart: always
+    ports:
+      - "15672"
+
+volumes:
+  caddy_data:
+  caddy_config:

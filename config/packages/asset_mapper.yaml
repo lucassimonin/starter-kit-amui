@@ -1,0 +1,13 @@
+framework:
+    asset_mapper:
+        # The paths to make available to the asset mapper.
+        paths:
+            - assets/
+            # Required so Stimulus can resolve UX Live Component assets (controllers.json → live_controller.js).
+            - '%kernel.project_dir%/vendor/symfony/ux-live-component/assets'
+        missing_import_mode: strict
+
+when@prod:
+    framework:
+        asset_mapper:
+            missing_import_mode: warn

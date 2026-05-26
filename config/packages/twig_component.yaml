@@ -1,0 +1,3 @@
+# https://symfony.com/bundles/ux-twig-component/current/index.html
+twig_component:
+    anonymous_template_directory: 'components'

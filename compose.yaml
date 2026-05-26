@@ -1,0 +1,52 @@
+
+services:
+  php:
+    build:
+      context: .
+      target: frankenphp_dev
+    # Important pour le hot-reloading en dev
+    volumes:
+      - ./:/app
+      - /app/var
+      - ./docker/php/conf.d/php.ini:/usr/local/etc/php/conf.d/docker-php-custom-php.ini
+      - ./docker/php/conf.d/zzz-dev-opcache.ini:/usr/local/etc/php/conf.d/zzz-dev-opcache.ini
+    ports:
+      - "80:80" # HTTP
+      - "443:443" # HTTPS (Caddy gère le certif auto-signé)
+      - "443:443/udp" # HTTP/3
+    environment:
+      # Active le mode debug symfony
+      APP_ENV: dev
+      APP_SECRET: changer_ce_secret_en_prod
+      XDEBUG_MODE: ${XDEBUG_MODE:-off}
+      PHP_IDE_CONFIG: "serverName=starter"
+      # Activation du worker mode (optionnel, commente pour mode classique)
+      # FRANKENPHP_CONFIG: "worker ./public/index.php"
+    tty: true
+###> doctrine/doctrine-bundle ###
+  database:
+      image: mysql:8.4
+      platform: linux/amd64
+      ports:
+          - "3306:3306"
+      volumes:
+          - database_data:/var/lib/mysql:rw
+      healthcheck:
+          test: '/usr/bin/mysql --execute "SHOW databases;"'
+          timeout: 3s
+          interval: 1s
+          retries: 10
+      environment:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 1
+          # Used by Symfony CLI when building DATABASE_URL (avoids default "main")
+          MYSQL_DATABASE: starter
+      cap_add:
+          - SYS_NICE # prevent "mbind: Operation not permitted" errors
+      labels:
+          com.symfony.server.service-prefix: "DATABASE"
+###< doctrine/doctrine-bundle ###
+
+volumes:
+###> doctrine/doctrine-bundle ###
+  database_data: {}
+###< doctrine/doctrine-bundle ###
