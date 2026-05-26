@@ -36,10 +36,13 @@ clean: ## Drop les BDD dev + test puis purge caches, logs Symfony (Docker doit �
 	$(EXEC_PHP) sh -c 'mkdir -p var/cache var/log var/share \
 	 && rm -rf var/cache/dev var/cache/prod var/cache/test \
 	 && find var/log -mindepth 1 -delete \
-	 && rm -rf var/share/dev'
+	 && rm -rf var/share/dev \
+	 && rm -rf node_modules bin'
 	@echo "→ cache:clear (--no-warmup, dev puis test)"
 	-$(SYMFONY) cache:clear --no-warmup --no-interaction || true
 	-$(SYMFONY) cache:clear --env=test --no-warmup --no-interaction || true
+	docker compose stop
+	docker compose down -v
 	@echo ""
 	@echo "✅ Clean terminé. Exemple : « make install && make reset-db »"
 	@echo "   (install recrée la BDD de test ; reset-db régénère la BDD développement + fixtures)"
