@@ -37,7 +37,7 @@ clean: ## Drop les BDD dev + test puis purge caches, logs Symfony (Docker doit Ã
 	 && rm -rf var/cache/dev var/cache/prod var/cache/test \
 	 && find var/log -mindepth 1 -delete \
 	 && rm -rf var/share/dev \
-	 && rm -rf node_modules bin'
+	 && rm -rf node_modules'
 	@echo "â†’ cache:clear (--no-warmup, dev puis test)"
 	-$(SYMFONY) cache:clear --no-warmup --no-interaction || true
 	-$(SYMFONY) cache:clear --env=test --no-warmup --no-interaction || true
