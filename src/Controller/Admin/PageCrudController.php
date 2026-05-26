@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Entity\Page;
+use App\Enum\TwitterCardKind;
 use App\Form\Admin\FooterSiteChromeFormType;
 use App\Form\PageBuilder\SectionBlockFormType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -14,12 +15,14 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\CollectionField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
 final class PageCrudController extends AbstractCrudController
@@ -89,22 +92,52 @@ final class PageCrudController extends AbstractCrudController
             ->hideOnIndex();
 
         yield FormField::addTab('SEO', 'fa-solid fa-magnifying-glass')
-            ->setHelp('Titres pour les résultats Google et le partage social.');
+            ->setHelp('Référencement, partages sociaux et indexation.');
         yield TextField::new('metaTitle', 'Meta title')
-            ->setHelp('Titre affiché dans Google (environ 60 caractères).');
+            ->setHelp('Balise &lt;title&gt; et titres des aperçus (environ 60 caractères).');
         yield TextField::new('metaDescription', 'Meta description')
-            ->setHelp('Texte court pour les résultats Google (environ 155 caractères).');
-        yield TextField::new('ogImage', 'Image Open Graph (URL ou chemin)')
+            ->setHelp('Texte pour Google et réseaux (environ 155 caractères).');
+        yield TextField::new('metaRobots', 'Robots (indexation)')
+            ->hideOnIndex()
+            ->setHelp('Laisser vide pour <code>index,follow</code>. Ex.&nbsp;: <code>noindex,nofollow</code>.');
+        yield TextareaField::new('canonicalOverride', 'URL canonique (facultatif)')
+            ->hideOnIndex()
+            ->setHelp(
+                'URL absolue <code>https://…</code>, chemin depuis la racine <code>/mentions-legales</code> '
+                .'ou slug sans slash. Vide&nbsp;: URL dérivée de la page d’accueil ou du slug.'
+            );
+        yield ChoiceField::new('ogType', 'Open Graph · type')
+            ->setChoices([
+                'Site web' => 'website',
+                'Article' => 'article',
+                'Profil' => 'profile',
+                'Produit' => 'product',
+            ])
             ->hideOnIndex();
+        yield TextField::new('ogSiteName', 'Open Graph · nom du site')
+            ->hideOnIndex()
+            ->setHelp('Vide&nbsp;: libellé «&nbsp;marque&nbsp;» du pied de page (<code>brand.line</code>).');
+        $twitterChoices = [];
+        foreach (TwitterCardKind::cases() as $case) {
+            $twitterChoices[$case->label()] = $case;
+        }
+        yield ChoiceField::new('twitterCard', 'Twitter / X · type de carte')
+            ->setChoices($twitterChoices)
+            ->hideOnIndex()
+            ->setHelp('«&nbsp;Grande image&nbsp;» convient si une image OG est renseignée.');
+        yield TextField::new('ogImage', 'Image Open Graph')
+            ->hideOnIndex()
+            ->setHelp('URL HTTPS ou chemin public (<code>/uploads/…</code>, <code>/images/…</code>).');
 
         yield FormField::addTab('Bandeau & pied', 'fa-solid fa-window-maximize');
         yield Field::new('footerPayload', 'Pied de page')
             ->setFormType(FooterSiteChromeFormType::class)
+            ->setFormTypeOption('allow_file_upload', true)
             ->hideOnIndex()
             ->onlyOnForms()
             ->setHelp(
-                'Bloc gauche du footer en éditeur riche ; titre et liens réseaux en dessous. '
-                .'Marque du bandeau et ligne © : toujours visibles/modifiables via le JSON en fiche détail.'
+                'Bloc gauche du pied de page en éditeur riche ; liens réseaux ; favicon, '
+                .'Apple Touch et couleur de thème pour le navigateur.'
             );
         yield ArrayField::new('footerPayload', 'Chrome site (JSON — lecture)')
             ->onlyOnDetail()

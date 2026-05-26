@@ -60,6 +60,9 @@ final class StarterWebsiteFixtures extends Fixture
                 ],
                 'copyrightName' => 'amuï studio',
                 'copyrightTagline' => 'Minimalisme radical.',
+                'faviconHref' => '/images/amui-studio-logo.png',
+                'appleTouchIcon' => '/images/amui-studio-logo.png',
+                'themeColor' => '#000000',
             ]);
 
         $hero = new SectionBlock();

@@ -1,11 +1,9 @@
 {% extends 'site/layout.html.twig' %}
 
-{% block title %}{{ page.metaTitle ?: page.title }}{% endblock %}
+{% block title %}{{ page.sharingDocumentTitle }}{% endblock %}
 
 {% block meta %}
-    {% if page.metaDescription %}
-        <meta name="description" content="{{ page.metaDescription|e('html_attr') }}">
-    {% endif %}
+    {% include 'site/_head_seo.html.twig' %}
 {% endblock %}
 
 {% block nav %}

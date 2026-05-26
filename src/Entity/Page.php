@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\TwitterCardKind;
 use App\Repository\PageRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PageRepository::class)]
@@ -45,6 +47,25 @@ class Page
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $ogImage = null;
+
+    /**
+     * Crawl policy for &lt;meta name="robots"&gt;. Empty → index,follow when published.
+     */
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $metaRobots = null;
+
+    /** Absolute https URL, URL relative to origin (/path), or slug-like path without leading slash — optional override. */
+    #[ORM\Column(length: 500, nullable: true)]
+    private ?string $canonicalOverride = null;
+
+    #[ORM\Column(length: 32)]
+    private string $ogType = 'website';
+
+    #[ORM\Column(length: 80, nullable: true)]
+    private ?string $ogSiteName = null;
+
+    #[ORM\Column(length: 32, enumType: TwitterCardKind::class)]
+    private TwitterCardKind $twitterCard = TwitterCardKind::SummaryLargeImage;
 
     #[ORM\Column]
     private bool $isHomepage = false;
@@ -159,6 +180,71 @@ class Page
         return $this;
     }
 
+    public function getMetaRobots(): ?string
+    {
+        return $this->metaRobots;
+    }
+
+    public function setMetaRobots(?string $metaRobots): self
+    {
+        $t = null === $metaRobots ? '' : trim($metaRobots);
+        $this->metaRobots = '' === $t ? null : $t;
+
+        return $this;
+    }
+
+    public function getCanonicalOverride(): ?string
+    {
+        return $this->canonicalOverride;
+    }
+
+    public function setCanonicalOverride(?string $canonicalOverride): self
+    {
+        $t = null === $canonicalOverride ? '' : trim($canonicalOverride);
+        $this->canonicalOverride = '' === $t ? null : $t;
+
+        return $this;
+    }
+
+    public function getOgType(): string
+    {
+        return $this->ogType;
+    }
+
+    public function setOgType(string $ogType): self
+    {
+        $t = trim($ogType);
+
+        $this->ogType = '' !== $t ? $t : 'website';
+
+        return $this;
+    }
+
+    public function getOgSiteName(): ?string
+    {
+        return $this->ogSiteName;
+    }
+
+    public function setOgSiteName(?string $ogSiteName): self
+    {
+        $t = null === $ogSiteName ? '' : trim($ogSiteName);
+        $this->ogSiteName = '' === $t ? null : $t;
+
+        return $this;
+    }
+
+    public function getTwitterCard(): TwitterCardKind
+    {
+        return $this->twitterCard;
+    }
+
+    public function setTwitterCard(TwitterCardKind $twitterCard): self
+    {
+        $this->twitterCard = $twitterCard;
+
+        return $this;
+    }
+
     public function isHomepage(): bool
     {
         return $this->isHomepage;
@@ -246,5 +332,122 @@ class Page
         );
 
         return new ArrayCollection($blocks);
+    }
+
+    /** Title for &lt;title&gt;, Open Graph and Twitter (meta title or internal title). */
+    public function sharingDocumentTitle(): string
+    {
+        $t = trim((string) ($this->metaTitle ?? ''));
+        if ('' !== $t) {
+            return $t;
+        }
+
+        return trim((string) ($this->title ?? ''));
+    }
+
+    public function effectiveOgSiteName(): ?string
+    {
+        $n = trim((string) ($this->ogSiteName ?? ''));
+        if ('' !== $n) {
+            return $n;
+        }
+
+        $fp = $this->footerPayload;
+        if (!\is_array($fp)) {
+            return null;
+        }
+
+        $brand = $fp['brand'] ?? null;
+        if (!\is_array($brand)) {
+            return null;
+        }
+
+        $line = isset($brand['line']) && \is_string($brand['line']) ? trim($brand['line']) : '';
+
+        return '' !== $line ? $line : null;
+    }
+
+    public function resolvedMetaRobots(): string
+    {
+        $r = trim((string) ($this->metaRobots ?? ''));
+
+        return '' !== $r ? $r : 'index,follow';
+    }
+
+    /** Normalized OG type tag (fallback website). */
+    public function resolvedOgType(): string
+    {
+        $t = strtolower(trim($this->ogType));
+
+        return '' !== $t ? $t : 'website';
+    }
+
+    public function canonicalAbsoluteUrl(Request $request): string
+    {
+        $origin = self::normalizeRequestOrigin($request);
+        $slug = trim((string) ($this->slug ?? ''));
+        $defaultPath = '/' === $slug || '' === $slug || $this->isHomepage()
+            ? '/'
+            : '/'.$slug;
+
+        $override = trim((string) ($this->canonicalOverride ?? ''));
+        if ('' === $override) {
+            return $origin.$defaultPath;
+        }
+
+        if (preg_match('#^https?://#i', $override)) {
+            return $override;
+        }
+
+        if ('/' === ($override[0] ?? '')) {
+            return $origin.$override;
+        }
+
+        return $origin.'/'.ltrim($override, '/');
+    }
+
+    public function resolvedOgImageAbsoluteUrl(Request $request): ?string
+    {
+        return self::resolvePublicAssetAbsoluteUrl($request, $this->ogImage);
+    }
+
+    /** JSON-LD WebSite snippet (safe for |json_encode in Twig). */
+    public function structuredDataWebsite(Request $request): array
+    {
+        $name = $this->effectiveOgSiteName() ?? $this->sharingDocumentTitle();
+        if ('' === trim($name)) {
+            $name = 'Site';
+        }
+
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'WebSite',
+            'name' => $name,
+            'url' => $this->canonicalAbsoluteUrl($request),
+        ];
+    }
+
+    private static function normalizeRequestOrigin(Request $request): string
+    {
+        return $request->getScheme().'://'.$request->getHost()
+            .($request->getPort() && !\in_array($request->getPort(), [80, 443], true)
+                ? ':'.$request->getPort()
+                : '');
+    }
+
+    private static function resolvePublicAssetAbsoluteUrl(Request $request, ?string $value): ?string
+    {
+        $v = trim((string) ($value ?? ''));
+        if ('' === $v) {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $v)) {
+            return $v;
+        }
+
+        $origin = self::normalizeRequestOrigin($request);
+
+        return '/' === ($v[0] ?? '') ? $origin.$v : $origin.'/'.$v;
     }
 }

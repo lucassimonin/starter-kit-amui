@@ -1,0 +1,58 @@
+{# Public <head> meta for site pages — fed from Page (BO) + optional keys in footerPayload. #}
+{% set fp = page.footerPayload ?? {} %}
+{% set canon = page.canonicalAbsoluteUrl(app.request) %}
+{% set share_title = page.sharingDocumentTitle %}
+{% set og_image = page.resolvedOgImageAbsoluteUrl(app.request) %}
+{% set twitter_card = page.twitterCard.value %}
+
+{# Crawl + canonical #}
+<meta name="robots" content="{{ page.resolvedMetaRobots|e('html_attr') }}">
+<link rel="canonical" href="{{ canon|e('html_attr') }}">
+
+{% if page.metaDescription %}
+    <meta name="description" content="{{ page.metaDescription|e('html_attr') }}">
+{% endif %}
+
+{# PWA / chrome UI #}
+{% if fp.themeColor is defined and fp.themeColor %}
+    <meta name="theme-color" content="{{ fp.themeColor|e('html_attr') }}">
+{% endif %}
+
+{# Icons (paths or absolute URLs) #}
+{% if fp.faviconHref is defined and fp.faviconHref %}
+    {% set fav = fp.faviconHref %}
+    {% set fav_abs = (fav starts with 'http://' or fav starts with 'https://') ? fav : absolute_url(fav starts with '/' ? fav : '/' ~ fav) %}
+    {% set fav_l = fav|lower %}
+    {% set fav_type = fav_l ends with '.png' ? 'image/png' : (fav_l ends with '.svg' ? 'image/svg+xml' : (fav_l ends with '.webp' ? 'image/webp' : 'image/x-icon')) %}
+    <link rel="icon" href="{{ fav_abs|e('html_attr') }}" type="{{ fav_type|e('html_attr') }}">
+{% endif %}
+{% if fp.appleTouchIcon is defined and fp.appleTouchIcon %}
+    {% set at = fp.appleTouchIcon %}
+    {% set at_abs = (at starts with 'http://' or at starts with 'https://') ? at : absolute_url(at starts with '/' ? at : '/' ~ at) %}
+    <link rel="apple-touch-icon" href="{{ at_abs|e('html_attr') }}">
+{% endif %}
+
+{# Open Graph #}
+<meta property="og:site_name" content="{{ (page.effectiveOgSiteName ?? share_title)|e('html_attr') }}">
+<meta property="og:type" content="{{ page.resolvedOgType|e('html_attr') }}">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="{{ share_title|e('html_attr') }}">
+{% if page.metaDescription %}
+    <meta property="og:description" content="{{ page.metaDescription|e('html_attr') }}">
+{% endif %}
+<meta property="og:url" content="{{ canon|e('html_attr') }}">
+{% if og_image %}
+    <meta property="og:image" content="{{ og_image|e('html_attr') }}">
+{% endif %}
+
+{# Twitter / X #}
+<meta name="twitter:card" content="{{ twitter_card|e('html_attr') }}">
+<meta name="twitter:title" content="{{ share_title|e('html_attr') }}">
+{% if page.metaDescription %}
+    <meta name="twitter:description" content="{{ page.metaDescription|e('html_attr') }}">
+{% endif %}
+{% if og_image %}
+    <meta name="twitter:image" content="{{ og_image|e('html_attr') }}">
+{% endif %}
+
+<script type="application/ld+json">{{ page.structuredDataWebsite(app.request)|json_encode(320)|raw }}</script>

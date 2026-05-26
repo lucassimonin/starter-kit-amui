@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Form\Admin;
 
+use App\Service\PublicFileUploader;
 use EasyCorp\Bundle\EasyAdminBundle\Form\Type\TextEditorType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Symfony\Component\Form\Extension\Core\Type\ColorType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -18,9 +22,15 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 final class FooterSiteChromeFormType extends AbstractType
 {
+    public function __construct(
+        private readonly PublicFileUploader $uploader,
+    ) {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $baselinePayload = [];
+        $uploader = $this->uploader;
 
         $builder->addEventListener(
             FormEvents::PRE_SET_DATA,
@@ -75,9 +85,38 @@ final class FooterSiteChromeFormType extends AbstractType
                 'error_bubbling' => false,
             ]);
 
+        $builder
+            ->add('faviconHref', TextType::class, [
+                'label' => 'Favicon',
+                'property_path' => '[faviconHref]',
+                'required' => false,
+                'help' => 'URL HTTPS ou chemin public (ex. <code>/images/favicon.ico</code>), ou téléversez un fichier ci-dessous.',
+            ])
+            ->add('faviconUpload', FileType::class, [
+                'mapped' => false,
+                'required' => false,
+                'label' => 'Téléverser un favicon',
+                'help' => 'PNG, ICO ou SVG ; enregistré sous <code>/uploads/page-builder/</code> et défini automatiquement comme favicon.',
+                'attr' => [
+                    'accept' => '.ico,.png,.svg,image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml',
+                ],
+            ])
+            ->add('appleTouchIcon', TextType::class, [
+                'label' => 'Icône Apple Touch',
+                'property_path' => '[appleTouchIcon]',
+                'required' => false,
+                'help' => 'Recommandé environ 180×180 — &lt;link rel="apple-touch-icon"&gt;.',
+            ])
+            ->add('themeColor', ColorType::class, [
+                'label' => 'Couleur thème (barre navigateur mobile)',
+                'property_path' => '[themeColor]',
+                'required' => false,
+                'help' => 'Méta <code>theme-color</code> pour les navigateurs compatibles.',
+            ]);
+
         $builder->addEventListener(
             FormEvents::SUBMIT,
-            static function (FormEvent $event) use (&$baselinePayload): void {
+            function (FormEvent $event) use (&$baselinePayload, $uploader): void {
                 $incoming = $event->getData();
                 if (!\is_array($incoming)) {
                     $event->setData(null);
@@ -110,6 +149,36 @@ final class FooterSiteChromeFormType extends AbstractType
                     }
                 }
 
+                $faviconUploaded = false;
+                $upload = $incoming['faviconUpload'] ?? null;
+                if ($upload instanceof UploadedFile && $upload->isValid()) {
+                    $merged['faviconHref'] = $uploader->storeImage($upload);
+                    $faviconUploaded = true;
+                }
+
+                if (!$faviconUploaded) {
+                    $faviconHref = $incoming['faviconHref'] ?? null;
+                    if (\is_string($faviconHref) && '' !== trim($faviconHref)) {
+                        $merged['faviconHref'] = trim($faviconHref);
+                    } else {
+                        unset($merged['faviconHref']);
+                    }
+                }
+
+                $appleTouch = $incoming['appleTouchIcon'] ?? null;
+                if (\is_string($appleTouch) && '' !== trim($appleTouch)) {
+                    $merged['appleTouchIcon'] = trim($appleTouch);
+                } else {
+                    unset($merged['appleTouchIcon']);
+                }
+
+                $themeColor = $incoming['themeColor'] ?? null;
+                if (\is_string($themeColor) && '' !== trim($themeColor)) {
+                    $merged['themeColor'] = trim($themeColor);
+                } else {
+                    unset($merged['themeColor']);
+                }
+
                 $event->setData([] === $merged ? null : $merged);
             },
         );
@@ -121,6 +190,7 @@ final class FooterSiteChromeFormType extends AbstractType
             'label' => false,
             'data_class' => null,
             'compound' => true,
+            'allow_file_upload' => false,
         ]);
 
         /*
@@ -138,6 +208,7 @@ final class FooterSiteChromeFormType extends AbstractType
             'prototype_data',
             'by_reference',
             'preserve_keys',
+            'allow_file_upload',
         ]);
     }
 
