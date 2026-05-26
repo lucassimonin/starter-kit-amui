@@ -4,8 +4,8 @@
 
 This repository is a **project starter** for shipping small to medium **marketing / portfolio sites** quickly. It bundles:
 
-- **Public site** — page-based content with reusable **section blocks** (`hero`, `gallery`, `about`, `contact`, plus generic layouts) stored in Doctrine. The default demo follows a **one-page, Tailwind CDN** layout inspired by the `amui.html` reference (minimal black / white / accent look, anchor navigation, contact form).
-- **Back-office** — [EasyAdmin](https://symfony.com/bundles/EasyAdminBundle) to manage pages, section payloads (JSON), inbound **contact messages**, and users.
+- **Public site** — page-based content with **five generic block kinds** (`hero`, `text_image`, `cards_grid`, `image_gallery`, `contact`) stored as JSON payloads in Doctrine. The default demo follows a **one-page, Tailwind CDN** layout inspired by the `amui.html` reference (minimal black / white / accent look, anchor navigation).
+- **Back-office** — [EasyAdmin](https://symfony.com/bundles/EasyAdminBundle) lets you edit each page with an embedded **collection of blocks** (`SectionBlockFormType`), inbound **contact messages**, and users.
 - **Contact capture** — POST endpoint persists messages for review in the admin (no opinionated mailer setup required to get started).
 
 Use it as a **scaffold**: replace branding, add migrations for new block types, plug your own theme or asset pipeline, or wire forms to Messenger / Mailer when you are ready for production.
@@ -51,7 +51,7 @@ Use it as a **scaffold**: replace branding, add migrations for new block types, 
 |------|--------|
 | Public demo home | `/` (expects one published page flagged as homepage) |
 | Admin UI | `/admin` |
-| Demo contact form | Anchored section on the homepage; submissions go to **Contact messages** in EasyAdmin |
+| Contact capture | Le bloc générique **`contact`** embarque le formulaire (POST **`/contact`**) ; les messages sont listés sous **Contact messages** |
 
 ### Demo administrator accounts
 
@@ -68,10 +68,14 @@ Both users have **`ROLE_ADMIN`**.
 
 ## Project layout (high level)
 
-- **`src/Entity/Page`** — slugs, SEO fields, optional `footerPayload` (header/footer chrome as structured JSON).
-- **`src/Entity/SectionBlock`** — ordered blocks per page: `layout` (`SectionLayout` enum), `payload` (JSON), optional `anchorId` for in-page links.
+- **`src/Entity/Page`** — SEO, `sections` Collection, **`footerPayload`**: onglet admin « Bandeau & pied » (marque du `_nav`, **colonne pied en WYSIWYG** + réseaux + © dans `_footer`).
+- **`src/Entity/SectionBlock`** — ordered blocks per page via `kind` (`SectionBlockKind` enum → `hero`, `text_image`, `cards_grid`, `image_gallery`, `contact`), `payload` (JSON shaped by the FormTypes below), optional `anchorId` / `navLabel` payload key for the header menu.
+- **`src/Form/PageBuilder/`** — formulaires génériques de blocs + `SectionBlockFormType`.
+- **`src/Controller/Admin/PageCrudController.php`** — formulaire Page en **onglets** EasyAdmin (infos, SEO, bandeau/pied, blocs).
+- **`src/Form/Admin/`** — `FooterSiteChromeFormType` : pied (WYSIWYG + titre & liens sociaux) ; fusion avec le JSON pour le bandeau et le ©. `SocialLinkItemFormType` = une ligne dans `socialLinks`.
 - **`templates/site/`** — global layout and page shell.
-- **`templates/sections/`** — one Twig file per section layout.
+- **`templates/sections/block_*.html.twig`** — one template per `SectionBlockKind` value.
+- **`public/uploads/page-builder/`** — default target for image uploads coming from bloc forms (persisted as `/uploads/page-builder/...` inside JSON).
 - **`src/DataFixtures/StarterWebsiteFixtures.php`** — demo homepage + the two admin users above.
 
 ---

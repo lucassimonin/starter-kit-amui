@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Starter Kit{% endblock %}</title>
+    {% block meta %}{% endblock %}
+    <meta name="robots" content="index,follow">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800;900&family=Lexend:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: '#000000',
+              paper: '#FFFFFF',
+              accent: '#E11D48',
+            },
+            fontFamily: {
+              display: ['Lexend', 'Inter', 'ui-sans-serif', 'system-ui'],
+              body: ['Inter', 'ui-sans-serif', 'system-ui'],
+            },
+          },
+        },
+      };
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+      :root { color-scheme: light; }
+      html { scroll-behavior: smooth; overflow-x: clip; }
+      .grain::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.06;
+        mix-blend-mode: multiply;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
+        background-size: 220px 220px;
+      }
+      :focus-visible { outline: 2px solid #e11d48; outline-offset: 2px; }
+      .stack { position: relative; z-index: 1; }
+      /* Decorative SVG mark (legacy); hero photos use .hero-visual */
+      .hero-mark { width: min(88vw, 11.5rem); height: auto; color: #000000; transition: color 200ms ease; }
+      @media (min-width: 640px) { .hero-mark { width: min(72vw, 14rem); } }
+      @media (min-width: 1024px) { .hero-mark { width: min(100%, 17.5rem); } }
+      .hero-mark-wrap:hover .hero-mark, .hero-mark-wrap:focus-within .hero-mark { color: #e11d48; }
+      .hero-visual-wrap:focus-within .hero-visual img,
+      .hero-visual-wrap:hover .hero-visual img { opacity: 0.92; transition: opacity 200ms ease; }
+    </style>
+</head>
+
+<body id="site" class="grain bg-paper text-ink antialiased">
+{% for type, messages in app.flashes %}
+    {% for message in messages %}
+        <div class="stack border-b px-4 py-3 text-sm {{ type == 'success' ? 'border-ink bg-paper text-ink' : 'border-accent bg-accent/10 text-ink' }}" role="status">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endfor %}
+
+{% block nav %}{% endblock %}
+
+{% block body %}{% endblock %}
+
+{% block footer %}{% endblock %}
+
+<script>
+    if (typeof lucide !== 'undefined' && lucide.createIcons) { lucide.createIcons(); }
+</script>
+</body>
+</html>

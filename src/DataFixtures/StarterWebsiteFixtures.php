@@ -7,14 +7,13 @@ namespace App\DataFixtures;
 use App\Entity\Page;
 use App\Entity\SectionBlock;
 use App\Entity\User;
-use App\Enum\SectionLayout;
+use App\Enum\SectionBlockKind;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
- * Seeds the demonstration one-page layout inspired by nuans/amui.html plus two demo admin users.
- * Intended for starter-kit previews (run: php bin/console doctrine:fixtures:load).
+ * Seeds a demo one-page (hero + cartes + texte/image + contact).
  */
 final class StarterWebsiteFixtures extends Fixture
 {
@@ -25,7 +24,6 @@ final class StarterWebsiteFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        // Demo administrators (fixtures purge the DB first — local / staging only).
         $primaryAdmin = (new User())
             ->setEmail('admin@starter.kit')
             ->setRoles(['ROLE_ADMIN']);
@@ -46,127 +44,116 @@ final class StarterWebsiteFixtures extends Fixture
             ->setIsHomepage(true)
             ->setIsPublished(true)
             ->setFooterPayload([
-                'brand' => ['name' => 'amuï', 'suffix' => 'studio'],
-                'brandAria' => 'amuï studio — Retour en haut',
-                'footerBrand' => 'amuï studio',
-                'footerEmail' => 'hello@amui.studio',
-                'footerPhone' => '+33 6 00 00 00 00',
-                'footerPhoneHref' => '+33600000000',
+                'brand' => [
+                    'line' => 'amuï studio',
+                ],
+                'footerContentHtml' =>
+                    '<p class="font-display text-lg font-black tracking-tight text-ink">amuï studio</p>'
+                    .'<p class="mt-3 text-sm text-ink/70">'
+                    .'<a class="underline-offset-2 hover:underline" href="mailto:hello@amui.studio">hello@amui.studio</a>'
+                    .'<br>'
+                    .'<a class="underline-offset-2 hover:underline" href="tel:+33600000000">+33 6 00 00 00 00</a>'
+                    .'</p>',
                 'socialTitle' => 'Réseaux',
                 'socialLinks' => [
-                    ['label' => 'LinkedIn', 'url' => '#', 'icon' => 'linkedin'],
+                    ['label' => 'LinkedIn', 'url' => 'https://linkedin.com'],
                 ],
                 'copyrightName' => 'amuï studio',
                 'copyrightTagline' => 'Minimalisme radical.',
             ]);
 
-        // Hero (#top): structured like amui.html headline + accent line + CTAs + mark image.
         $hero = new SectionBlock();
-        $hero->setLabel('Bloc hero démo')
+        $hero->setLabel('Bloc Hero')
             ->setAnchorId('top')
-            ->setLayout(SectionLayout::Hero)
+            ->setKind(SectionBlockKind::Hero)
             ->setPosition(0)
             ->setIsEnabled(true)
             ->setPayload([
-                'headline' => 'amuï studio :',
-                'heroAccent' => 'Créateurs d’expériences digitales.',
-                'subheadline' => 'Design minimal, systèmes clairs, interfaces qui vont droit au but. '
-                    .'Le contraste est une signature — l’efficacité, une obsession.',
-                'ctaLabel' => 'Démarrer un projet',
-                'ctaUrl' => '#contact',
-                'secondaryCtaLabel' => 'Voir les projets',
-                'secondaryCtaUrl' => '#projets',
-                'image' => 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80',
-                'imageAlt' => 'Composition minimaliste noir et blanc',
+                'titre' => 'amuï studio : créateurs numériques.',
+                'sousTitre' => 'Design minimal, systèmes clairs, interfaces qui vont droit au but. '
+                    .'Contraste franc, lignes précises.',
+                'imageFond' => '/images/amui-studio-logo.png',
+                'ctaTexte' => 'Voir les références',
+                'ctaLien' => '#contact',
+                'navLabel' => 'Accueil',
             ]);
         $home->addSection($hero);
 
-        $gallery = new SectionBlock();
-        $gallery->setLabel('Bloc portfolio Projets')
+        $portfolio = new SectionBlock();
+        $portfolio->setLabel('Cartes projet')
             ->setAnchorId('projets')
-            ->setLayout(SectionLayout::Gallery)
+            ->setKind(SectionBlockKind::CardsGrid)
             ->setPosition(1)
             ->setIsEnabled(true)
             ->setPayload([
-                'headline' => 'Projets',
+                'titreSection' => 'Projets',
+                'descriptionSection' => 'Quelques terrains où le minimalisme noir & blanc gagne contre le bruit visuel.',
                 'navLabel' => 'Projets',
-                'items' => [
+                'cartes' => [
                     [
-                        'title' => 'L’Atelier Plomberie',
-                        'subtitle' => 'Identité · Site · SEO',
-                        'image' => 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=1200&q=80',
-                        'imageAlt' => 'Aperçu du projet L\'Atelier Plomberie',
-                        'url' => '#projets',
-                        'aria' => 'Projet : L’Atelier Plomberie',
-                        'linkLabel' => 'Voir',
+                        'titre' => 'L’Atelier Plomberie',
+                        'description' => 'Identité · Site vitrine · SEO local',
+                        'imageOuIcone' => 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=1200&q=80',
+                        'lien' => '#projets',
                     ],
                     [
-                        'title' => 'Nuans',
-                        'subtitle' => 'E-commerce · UI System',
-                        'image' => 'https://nuans-salon.com/wp-content/uploads/2018/12/Nuans-marchedulez-ambiance1-min.png',
-                        'imageAlt' => 'Aperçu du projet Nuans — salon de coiffure',
-                        'url' => '#projets',
-                        'aria' => 'Projet : Nuans',
-                        'linkLabel' => 'Voir',
+                        'titre' => 'Nuans',
+                        'description' => 'Retail beauté · E-commerce léger · UI très épurée',
+                        'imageOuIcone' => 'https://nuans-salon.com/wp-content/uploads/2018/12/Nuans-marchedulez-ambiance1-min.png',
+                        'lien' => '#projets',
                     ],
                     [
-                        'title' => 'Référence Bois',
-                        'subtitle' => 'Terrasse · Bardage · Vitrine',
-                        'image' => 'https://www.referencebois.fr/wp-content/uploads/2024/12/terrasse-bois.jpg',
-                        'imageAlt' => 'Aperçu du projet Référence Bois',
-                        'url' => '#projets',
-                        'aria' => 'Projet : Référence Bois',
-                        'linkLabel' => 'Voir',
+                        'titre' => 'Référence Bois',
+                        'description' => 'Terrasse · Photo produits · Showcase simple',
+                        'imageOuIcone' => 'https://www.referencebois.fr/wp-content/uploads/2024/12/terrasse-bois.jpg',
+                        'lien' => '#projets',
                     ],
                     [
-                        'title' => 'Bivouak Café',
-                        'subtitle' => 'Coffee shop · Lifestyle · One page',
-                        'image' => 'https://www.bivouakcafe.fr/wp-content/uploads/2022/04/wim-lippens-BC02_HD-0031-1920x1091.jpg',
-                        'imageAlt' => 'Aperçu du projet Bivouak Café',
-                        'url' => '#projets',
-                        'aria' => 'Projet : Bivouak Café',
-                        'linkLabel' => 'Voir',
+                        'titre' => 'Bivouak Café',
+                        'description' => 'Coffee shop · Lifestyle · One page pleine vue',
+                        'imageOuIcone' => 'https://www.bivouakcafe.fr/wp-content/uploads/2022/04/wim-lippens-BC02_HD-0031-1920x1091.jpg',
+                        'lien' => '#projets',
                     ],
                 ],
             ]);
-        $home->addSection($gallery);
+        $home->addSection($portfolio);
 
-        $about = new SectionBlock();
-        $about->setLabel('Bloc Agence')
+        $agence = new SectionBlock();
+        $agence->setLabel('Présentation agence')
             ->setAnchorId('agence')
-            ->setLayout(SectionLayout::About)
+            ->setKind(SectionBlockKind::TextImage)
             ->setPosition(2)
             ->setIsEnabled(true)
             ->setPayload([
-                'headline' => 'L’Agence',
+                'titre' => 'L’Agence',
+                'contenu' => '<p>Nous façonnons des expériences web rapides et lisibles&nbsp;: direction artistique, '
+                    .'interfaces soignées, front-end précis du concept à la livraison.</p>'
+                    .'<p>Un site one-page doit raconter vite, sans parasite. Nos blocs génériques servent précisément '
+                    .'cette narration modulaire.</p>',
+                'image' => 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=900&q=80',
+                'inverserOrdre' => false,
                 'navLabel' => 'Agence',
-                'sidebarIntro' => 'Studio digital. Direction artistique, design système, front-end créatif.',
-                'aboutLead' => 'Le minimalisme au service de l’efficacité.',
-                'bodyHtml' => '<p>Nous construisons des expériences digitales structurées, rapides, '
-                    .'et lisibles — du concept à l’interface. Chaque élément doit justifier sa présence. Rien de plus.</p>',
-                'highlights' => [
-                    ['title' => 'Design', 'text' => 'Identité · UI System · Typographie'],
-                    ['title' => 'Développement', 'text' => 'Front-end · Performance · Accessibilité'],
-                ],
             ]);
-        $home->addSection($about);
+        $home->addSection($agence);
 
         $contact = new SectionBlock();
-        $contact->setLabel('Bloc contact démo')
+        $contact->setLabel('Bloc contact')
             ->setAnchorId('contact')
-            ->setLayout(SectionLayout::Contact)
+            ->setKind(SectionBlockKind::Contact)
             ->setPosition(3)
             ->setIsEnabled(true)
             ->setPayload([
-                'headline' => 'Contact',
-                'navLabel' => 'Contact',
-                'subheadline' => 'Un message clair, une réponse rapide. Dites-nous ce que vous '
+                'titre' => 'Contact',
+                'introduction' => 'Un message clair, une réponse rapide. Dites-nous ce que vous '
                     .'voulez faire — on vous dira comment le faire bien.',
-                'infoBoxTitle' => 'Infos',
-                'contactEmail' => 'hello@amui.studio',
-                'contactPhone' => '+33 6 00 00 00 00',
-                'contactPhoneHref' => '+33600000000',
-                'formDisclaimer' => 'En envoyant, vous acceptez un retour par email.',
+                'contenu' => '<p>Pour un démarrage efficace, indiquez votre secteur, une contrainte '
+                    .'(planning, budget indicatif) et le canal de retour privilégié.</p>',
+                'titreEncart' => 'Infos',
+                'emailAffiche' => 'hello@amui.studio',
+                'telephoneAffiche' => '+33 6 00 00 00 00',
+                'lienTelephone' => '+33600000000',
+                'mentionSoumission' => 'En envoyant, vous acceptez un retour par email.',
+                'navLabel' => 'Contact',
             ]);
         $home->addSection($contact);
 

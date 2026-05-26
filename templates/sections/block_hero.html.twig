@@ -1,0 +1,47 @@
+{# @var section \App\Entity\SectionBlock #}
+{% set p = section.payload %}
+{% set titre = p.titre|default('') %}
+{% set sous_titre = p.sousTitre|default(null) %}
+{% set image_fond = p.imageFond|default(null) %}
+{% set cta_texte = p.ctaTexte|default(null) %}
+{% set cta_lien = p.ctaLien|default(null) %}
+{% set anchor = section.anchorId ?? null %}
+<section{% if anchor %} id="{{ anchor }}"{% endif %} class="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+    <div class="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-stretch lg:gap-12">
+
+        <div class="{{ image_fond ? 'lg:col-span-7' : 'lg:col-span-12' }} flex min-h-0 flex-col justify-center">
+            {% if titre %}
+                <h1 class="font-display text-4xl font-black tracking-tight sm:text-6xl lg:text-7xl">
+                    <span class="block">{{ titre|e }}</span>
+                </h1>
+            {% endif %}
+
+            {% if sous_titre %}
+                <p class="mt-6 max-w-2xl font-body text-base leading-relaxed sm:text-lg">
+                    {{ sous_titre|nl2br|e }}
+                </p>
+            {% endif %}
+
+            {% if cta_texte and cta_lien %}
+                <div class="mt-8 flex flex-wrap items-center gap-4">
+                    <a href="{{ cta_lien }}"
+                       class="inline-flex items-center justify-center border border-ink bg-ink px-5 py-3 text-sm font-semibold text-paper transition-colors duration-200 hover:border-accent hover:bg-accent focus:border-accent focus:bg-accent">
+                        {{ cta_texte }}</a>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if image_fond %}
+            <div class="hero-visual-wrap lg:col-span-5 flex min-h-0 items-stretch justify-center lg:justify-end">
+                <div class="hero-visual relative aspect-square w-full max-w-md overflow-hidden border border-ink bg-ink lg:max-h-none lg:w-full lg:max-w-none">
+                    <img class="absolute inset-0 h-full w-full object-cover"
+                         loading="lazy"
+                         decoding="async"
+                         src="{{ image_fond }}"
+                         alt="">
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+</section>

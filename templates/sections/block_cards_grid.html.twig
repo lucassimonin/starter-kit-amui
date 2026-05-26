@@ -1,0 +1,58 @@
+{# @var section \App\Entity\SectionBlock #}
+{% set p = section.payload %}
+{% set titre = p.titreSection|default('') %}
+{% set intro = p.descriptionSection|default(null) %}
+{% set cartes = p.cartes|default([]) %}
+<section{% if section.anchorId %} id="{{ section.anchorId }}"{% endif %} class="border-t border-ink/15">
+    <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        {% if titre or intro %}
+            <div class="max-w-3xl">
+                {% if titre %}
+                    <h2 class="font-display text-3xl font-black tracking-tight sm:text-4xl">{{ titre|e }}</h2>
+                {% endif %}
+                {% if intro %}
+                    <p class="mt-4 text-sm leading-relaxed text-ink/70">{{ intro|nl2br|e }}</p>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 {{ titre or intro ? 'mt-10' : '' }} {{ cartes|length == 1 ? 'md:max-w-xl md:mx-auto' : '' }}">
+            {% for item in cartes %}
+                {% set url = item.lien ?? '#' %}
+                {% set titre_c = item.titre|default('') %}
+                {% set desc = item.description|default(null) %}
+                {% set visuel = item.imageOuIcone|default(null) %}
+                <a href="{{ url }}"
+                   class="group relative overflow-hidden border border-ink transition-colors duration-200 hover:border-accent focus:border-accent"
+                   aria-label="{{ titre_c ? 'Carte : ' ~ titre_c : 'Carte' }}"
+                >
+                    {% if visuel %}
+                        <div class="aspect-[16/10] bg-paper">
+                            <img alt="{{ titre_c|e('html_attr') }}"
+                                 class="h-full w-full object-cover"
+                                 loading="lazy"
+                                 referrerpolicy="no-referrer"
+                                 src="{{ visuel }}"
+                            >
+                        </div>
+                    {% endif %}
+                    <div class="flex items-center justify-between px-5 py-4">
+                        <div>
+                            {% if titre_c %}
+                                <div class="font-display text-lg font-black tracking-tight transition-colors duration-200 group-hover:text-accent group-focus:text-accent">
+                                    {{ titre_c|e }}
+                                </div>
+                            {% endif %}
+                            {% if desc %}
+                                <div class="mt-1 text-xs text-ink/70">{{ desc|nl2br|e }}</div>
+                            {% endif %}
+                        </div>
+                        <span class="text-xs font-semibold text-ink/70 transition-colors duration-200 group-hover:text-accent group-focus:text-accent">
+                            Voir
+                        </span>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>

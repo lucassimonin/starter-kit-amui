@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Asset;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
@@ -24,13 +26,20 @@ class DashboardController extends AbstractDashboardController
             ->setTitle('Starter Kit — Back-office');
     }
 
+    public function configureAssets(): Assets
+    {
+        // TextEditorType used inside custom ArrayField sub-forms does not get TextEditorField assets; load Trix globally on forms.
+        return parent::configureAssets()
+            ->addCssFile(Asset::fromEasyAdminAssetPackage('field-text-editor.css')->onlyOnForms())
+            ->addJsFile(Asset::fromEasyAdminAssetPackage('field-text-editor.js')->onlyOnForms());
+    }
+
     public function configureMenuItems(): iterable
     {
         yield MenuItem::linkToDashboard('Tableau de bord', 'fa fa-home');
 
         yield MenuItem::section('Contenu');
-        yield MenuItem::linkTo(PageCrudController::class, 'Pages & SEO', 'fa fa-file');
-        yield MenuItem::linkTo(SectionBlockCrudController::class, 'Blocs de sections', 'fa fa-layer-group');
+        yield MenuItem::linkTo(PageCrudController::class, 'Pages & blocs génériques', 'fa fa-file');
 
         yield MenuItem::section('Messagerie');
         yield MenuItem::linkTo(ContactMessageCrudController::class, 'Messages contact', 'fa fa-envelope');

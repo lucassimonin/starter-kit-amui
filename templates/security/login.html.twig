@@ -1,34 +1,88 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Connexion · Back-Office{% endblock %}
+{% block title %}Connexion · Back-office{% endblock %}
+
+{% block stylesheets %}{% endblock %}
+
+{% block javascripts %}
+    {{ importmap('login') }}
+{% endblock %}
 
 {% block body %}
-<form method="post">
-    {% if error %}
-        <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-    {% endif %}
-
-    {% if app.user %}
-        <div class="mb-3">
-            You are logged in as {{ app.user.userIdentifier }}, <a href="{{ logout_path() }}">Logout</a>
+<div class="login-page">
+    <aside class="login-page__brand">
+        <div>
+            <p class="login-page__brand-mark">Back-office</p>
+            <p class="login-page__brand-tagline">
+                Accès réservé aux comptes administrateur. Utilisez l’e-mail et le mot de passe définis pour votre instance.
+            </p>
         </div>
-    {% endif %}
+        <p class="login-page__brand-foot">
+            <a href="{{ path('app_home') }}">← Retour au site</a>
+        </p>
+    </aside>
 
-    <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
-    <label for="inputEmail">Email</label>
-    <input type="email" value="{{ last_username }}" name="email" id="inputEmail" class="form-control" autocomplete="email" required autofocus>
-    <label for="inputPassword">Password</label>
-    <input type="password" name="password" id="inputPassword" class="form-control" autocomplete="current-password" required>
-    <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
+    <main class="login-page__main">
+        <div class="login-panel">
+            <h1 class="login-panel__title">Connexion</h1>
+            <p class="login-panel__subtitle">Identifiez-vous pour accéder à l’administration.</p>
 
-    <div class="checkbox mb-3">
-        <label>
-            <input type="checkbox" name="_remember_me"> Remember me
-        </label>
-    </div>
+            {% if error %}
+                <div class="login-alert" role="alert">
+                    {{ error.messageKey|trans(error.messageData, 'security') }}
+                </div>
+            {% endif %}
 
-    <button class="btn btn-lg btn-primary" type="submit">
-        Sign in
-    </button>
-</form>
+            {% if app.user %}
+                <div class="login-alert login-alert--info" role="status">
+                    Vous êtes connecté en tant que <strong>{{ app.user.userIdentifier }}</strong>.
+                    <a href="{{ logout_path() }}">Se déconnecter</a>
+                </div>
+            {% endif %}
+
+            <form method="post" class="login-form" autocomplete="on">
+                <div class="login-field">
+                    <label for="inputEmail">Adresse e-mail</label>
+                    <input
+                        type="email"
+                        value="{{ last_username }}"
+                        name="email"
+                        id="inputEmail"
+                        autocomplete="email"
+                        required
+                        autofocus
+                        placeholder="vous@exemple.org"
+                    >
+                </div>
+
+                <div class="login-field">
+                    <label for="inputPassword">Mot de passe</label>
+                    <input
+                        type="password"
+                        name="password"
+                        id="inputPassword"
+                        autocomplete="current-password"
+                        required
+                        placeholder="············"
+                    >
+                </div>
+
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                <div class="login-remember">
+                    <input type="checkbox" name="_remember_me" id="remember_me" value="1">
+                    <label for="remember_me">Se souvenir de moi sur cet appareil</label>
+                </div>
+
+                <button type="submit" class="login-submit">
+                    Se connecter
+                </button>
+            </form>
+
+            <p class="login-panel__smallprint">
+                Sessions sécurisées · <a href="{{ path('app_home') }}">Voir le site public</a>
+            </p>
+        </div>
+    </main>
+</div>
 {% endblock %}

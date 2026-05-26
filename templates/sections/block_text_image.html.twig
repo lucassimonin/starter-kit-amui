@@ -1,0 +1,51 @@
+{# @var section \App\Entity\SectionBlock #}
+{% set p = section.payload %}
+{% set titre = p.titre|default('') %}
+{% set contenu = p.contenu|default('') %}
+{% set image_src = p.image|default(null) %}
+{% set invert = p.inverserOrdre|default(false) %}
+<section{% if section.anchorId %} id="{{ section.anchorId }}"{% endif %} class="border-t border-ink/15">
+    <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        <div class="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-center lg:gap-12">
+            {% if invert and image_src %}
+                <div class="order-2 lg:order-1 lg:col-span-6">
+                    <div class="aspect-[4/5] overflow-hidden border border-ink bg-ink/5">
+                        <img src="{{ image_src }}"
+                             loading="lazy"
+                             decoding="async"
+                             alt=""
+                             class="h-full w-full object-cover">
+                    </div>
+                </div>
+                <div class="order-1 lg:order-2 lg:col-span-6">
+                    {% if titre %}
+                        <h2 class="font-display text-3xl font-black tracking-tight sm:text-4xl">{{ titre|e }}</h2>
+                    {% endif %}
+                    {% if contenu %}
+                        <div class="mt-5 max-w-2xl text-base leading-relaxed text-ink/80">{{ contenu|raw }}</div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="lg:col-span-6">
+                    {% if titre %}
+                        <h2 class="font-display text-3xl font-black tracking-tight sm:text-4xl">{{ titre|e }}</h2>
+                    {% endif %}
+                    {% if contenu %}
+                        <div class="mt-5 max-w-2xl text-base leading-relaxed text-ink/80">{{ contenu|raw }}</div>
+                    {% endif %}
+                </div>
+                {% if image_src %}
+                    <div class="lg:col-span-6">
+                        <div class="aspect-[4/5] overflow-hidden border border-ink bg-ink/5">
+                            <img src="{{ image_src }}"
+                                 loading="lazy"
+                                 decoding="async"
+                                 alt=""
+                                 class="h-full w-full object-cover">
+                        </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</section>

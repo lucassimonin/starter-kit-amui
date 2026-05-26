@@ -1,0 +1,33 @@
+{# @var page \App\Entity\Page #}
+{% set fp = page.footerPayload ?? {} %}
+{% set b = fp.brand ?? {} %}
+{# Prefer brand.line for a single logotype ("amuï studio"); fallback name + suffix without uneven weights #}
+{% if b.line is defined and b.line %}
+    {% set logo_text = b.line %}
+{% elseif b.name is defined and b.name %}
+    {% set logo_text = b.name ~ (b.suffix is defined and b.suffix ? ' ' ~ b.suffix : '') %}
+{% else %}
+    {% set logo_text = page.title %}
+{% endif %}
+<header class="stack border-b border-ink/15">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
+        <a href="#top"
+           class="group font-display text-lg font-black lowercase tracking-tight transition-colors duration-200 hover:text-accent"
+           aria-label="{{ (fp.brandAria ?? logo_text)|e('html_attr') }}"
+        >
+            {{- logo_text|e -}}
+        </a>
+        <nav aria-label="Navigation principale">
+            <ul class="flex items-center gap-6 text-sm font-medium">
+                {% for s in page.enabledSections %}
+                    {% if s.appearsInPrimaryNav %}
+                        <li>
+                            <a class="transition-colors duration-200 hover:text-accent focus:text-accent"
+                               href="#{{ s.anchorId }}">{{ s.resolvedNavMenuLabel }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </nav>
+    </div>
+</header>

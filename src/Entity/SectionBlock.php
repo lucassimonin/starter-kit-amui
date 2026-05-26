@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Enum\SectionLayout;
+use App\Enum\SectionBlockKind;
 use App\Repository\SectionBlockRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -12,6 +12,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: SectionBlockRepository::class)]
 #[ORM\HasLifecycleCallbacks]
+#[ORM\Table(name: 'section_block')]
 class SectionBlock
 {
     #[ORM\Id]
@@ -39,9 +40,14 @@ class SectionBlock
     )]
     private ?string $anchorId = null;
 
-    #[ORM\Column(length: 30, enumType: SectionLayout::class)]
-    #[Assert\NotNull]
-    private ?SectionLayout $layout = null;
+    /**
+     * Primary site header (#anchors): show a link only when anchor + labels exist and this is true.
+     */
+    #[ORM\Column(options: ['default' => true])]
+    private bool $showInNav = true;
+
+    #[ORM\Column(length: 32, enumType: SectionBlockKind::class)]
+    private SectionBlockKind $kind;
 
     /** @var array<string, mixed> */
     #[ORM\Column(type: Types::JSON, options: ['jsonb' => true])]
@@ -63,6 +69,7 @@ class SectionBlock
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTimeImmutable();
+        $this->kind = SectionBlockKind::Hero;
     }
 
     #[ORM\PreUpdate]
@@ -73,7 +80,32 @@ class SectionBlock
 
     public function __toString(): string
     {
-        return $this->label ?? ($this->layout?->label() ?? 'Bloc');
+        $kindLabel = $this->kind->label();
+
+        return sprintf('%s (%s)', $this->label ?? 'Sans nom', $kindLabel);
+    }
+
+    /** Short label shown in public header anchors when explicit payload.navLabel is absent. */
+    public function resolvedNavMenuLabel(): string
+    {
+        $nav = $this->payload['navLabel'] ?? '';
+        $navStr = \is_string($nav) ? trim($nav) : '';
+        if ('' !== $navStr) {
+            return $navStr;
+        }
+
+        return trim((string) ($this->label ?? ''));
+    }
+
+    public function appearsInPrimaryNav(): bool
+    {
+        if (!$this->showInNav) {
+            return false;
+        }
+
+        $anchor = trim((string) ($this->anchorId ?? ''));
+
+        return '' !== $anchor && '' !== $this->resolvedNavMenuLabel();
     }
 
     public function getId(): ?int
@@ -117,14 +149,26 @@ class SectionBlock
         return $this;
     }
 
-    public function getLayout(): ?SectionLayout
+    public function isShowInNav(): bool
     {
-        return $this->layout;
+        return $this->showInNav;
     }
 
-    public function setLayout(SectionLayout $layout): self
+    public function setShowInNav(bool $showInNav): self
     {
-        $this->layout = $layout;
+        $this->showInNav = $showInNav;
+
+        return $this;
+    }
+
+    public function getKind(): SectionBlockKind
+    {
+        return $this->kind;
+    }
+
+    public function setKind(SectionBlockKind $kind): self
+    {
+        $this->kind = $kind;
 
         return $this;
     }
@@ -175,137 +219,5 @@ class SectionBlock
     public function getUpdatedAt(): \DateTimeImmutable
     {
         return $this->updatedAt;
-    }
-
-    public function get(string $key, mixed $default = null): mixed
-    {
-        return $this->payload[$key] ?? $default;
-    }
-
-    /**
-     * Virtual fields for EasyAdmin: they read/write the JSON payload so clients never edit raw JSON.
-     * Reassigns the whole array so Doctrine reliably detects changes on the JSON column.
-     */
-    private function setPayloadScalar(string $key, ?string $value): void
-    {
-        $p = $this->payload;
-        if (null === $value || '' === $value || (\is_string($value) && '' === trim($value))) {
-            unset($p[$key]);
-        } else {
-            $p[$key] = $value;
-        }
-        $this->payload = $p;
-    }
-
-    public function getPayloadHeadline(): ?string
-    {
-        $v = $this->payload['headline'] ?? null;
-
-        return \is_string($v) ? $v : null;
-    }
-
-    public function setPayloadHeadline(?string $headline): self
-    {
-        $this->setPayloadScalar('headline', $headline);
-
-        return $this;
-    }
-
-    public function getPayloadSubheadline(): ?string
-    {
-        $v = $this->payload['subheadline'] ?? null;
-
-        return \is_string($v) ? $v : null;
-    }
-
-    public function setPayloadSubheadline(?string $subheadline): self
-    {
-        $this->setPayloadScalar('subheadline', $subheadline);
-
-        return $this;
-    }
-
-    public function getPayloadBodyHtml(): ?string
-    {
-        $v = $this->payload['bodyHtml'] ?? null;
-
-        return \is_string($v) ? $v : null;
-    }
-
-    public function setPayloadBodyHtml(?string $bodyHtml): self
-    {
-        $this->setPayloadScalar('bodyHtml', $bodyHtml);
-
-        return $this;
-    }
-
-    public function getPayloadImage(): ?string
-    {
-        $v = $this->payload['image'] ?? null;
-
-        return \is_string($v) ? $v : null;
-    }
-
-    public function setPayloadImage(?string $image): self
-    {
-        $this->setPayloadScalar('image', $image);
-
-        return $this;
-    }
-
-    public function getPayloadCtaLabel(): ?string
-    {
-        $v = $this->payload['ctaLabel'] ?? null;
-
-        return \is_string($v) ? $v : null;
-    }
-
-    public function setPayloadCtaLabel(?string $ctaLabel): self
-    {
-        $this->setPayloadScalar('ctaLabel', $ctaLabel);
-
-        return $this;
-    }
-
-    public function getPayloadCtaUrl(): ?string
-    {
-        $v = $this->payload['ctaUrl'] ?? null;
-
-        return \is_string($v) ? $v : null;
-    }
-
-    public function setPayloadCtaUrl(?string $ctaUrl): self
-    {
-        $this->setPayloadScalar('ctaUrl', $ctaUrl);
-
-        return $this;
-    }
-
-    public function getPayloadSecondaryCtaLabel(): ?string
-    {
-        $v = $this->payload['secondaryCtaLabel'] ?? null;
-
-        return \is_string($v) ? $v : null;
-    }
-
-    public function setPayloadSecondaryCtaLabel(?string $secondaryCtaLabel): self
-    {
-        $this->setPayloadScalar('secondaryCtaLabel', $secondaryCtaLabel);
-
-        return $this;
-    }
-
-    public function getPayloadSecondaryCtaUrl(): ?string
-    {
-        $v = $this->payload['secondaryCtaUrl'] ?? null;
-
-        return \is_string($v) ? $v : null;
-    }
-
-    public function setPayloadSecondaryCtaUrl(?string $secondaryCtaUrl): self
-    {
-        $this->setPayloadScalar('secondaryCtaUrl', $secondaryCtaUrl);
-
-        return $this;
     }
 }

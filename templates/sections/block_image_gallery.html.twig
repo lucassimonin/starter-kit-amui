@@ -1,0 +1,24 @@
+{# @var section \App\Entity\SectionBlock #}
+{% set p = section.payload %}
+{% set titre = p.titreSection|default('') %}
+{% set images = p.images|default([]) %}
+<section{% if section.anchorId %} id="{{ section.anchorId }}"{% endif %} class="border-t border-ink/15">
+    <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        {% if titre %}
+            <h2 class="font-display text-3xl font-black tracking-tight sm:text-4xl">{{ titre|e }}</h2>
+        {% endif %}
+
+        <div class="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-5 lg:grid-cols-4">
+            {% for src in images %}
+                {% if src %}
+                    <div class="aspect-square overflow-hidden border border-ink/15 bg-ink/5">
+                        <img src="{{ src }}" alt="{{ titre|default('Visuel')|e('html_attr') }}"
+                             class="h-full w-full object-cover"
+                             loading="lazy"
+                             decoding="async">
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</section>

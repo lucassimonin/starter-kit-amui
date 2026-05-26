@@ -1,7 +1,7 @@
 EXEC_PHP = docker compose exec php
 SYMFONY = $(EXEC_PHP) php bin/console
 
-.PHONY: help start stop open shell install db-diff db-migrate db-fixture reset-db reset-test consume watch reset-test tests test-unit test-func qa fix cs-check rector-check stan build-assets deploy
+.PHONY: help start stop open shell install clean reinstall db-diff db-migrate db-fixture reset-db reset-test consume watch reset-test tests test-unit test-func qa fix cs-check rector-check stan build-assets deploy
 
 ## ——— PROJECT ———
 help: ## Show this help
@@ -25,6 +25,26 @@ install: start ## Install the entire project (Vendor + Dev database + Test datab
 	@$(MAKE) build-assets
 	@$(MAKE) reset-test
 	@echo "✅ Projet installé et prêt !"
+
+clean: ## Drop les BDD dev + test puis purge caches, logs Symfony (Docker doit être démarrable)
+	@echo "🧹 Nettoyage : bases Doctrine dev/test, var/cache/*, logs, var/share/dev"
+	docker compose up -d --remove-orphans >/dev/null
+	@echo "→ doctrine:database:drop"
+	-$(SYMFONY) doctrine:database:drop --force --if-exists --no-interaction
+	-$(SYMFONY) doctrine:database:drop --force --if-exists --env=test --no-interaction
+	@echo "→ var/cache, var/log, var/share/dev"
+	$(EXEC_PHP) sh -c 'mkdir -p var/cache var/log var/share \
+	 && rm -rf var/cache/dev var/cache/prod var/cache/test \
+	 && find var/log -mindepth 1 -delete \
+	 && rm -rf var/share/dev'
+	@echo "→ cache:clear (--no-warmup, dev puis test)"
+	-$(SYMFONY) cache:clear --no-warmup --no-interaction || true
+	-$(SYMFONY) cache:clear --env=test --no-warmup --no-interaction || true
+	@echo ""
+	@echo "✅ Clean terminé. Exemple : « make install && make reset-db »"
+	@echo "   (install recrée la BDD de test ; reset-db régénère la BDD développement + fixtures)"
+
+reinstall: clean install reset-db ## clean + deps/assets + BDD test & dev (migrate + fixtures dev)
 
 ## ——— BDD ———
 

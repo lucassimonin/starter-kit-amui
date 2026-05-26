@@ -1,0 +1,96 @@
+{# @var section \App\Entity\SectionBlock #}
+{% set p = section.payload %}
+{# Support both new French-ish keys & legacy payloads from StarterWebsiteFixtures v1 #}
+{% set titre = p.titre|default(p.headline|default('')) %}
+{% set intro = p.introduction|default(p.subheadline|default(null)) %}
+{% set contenu = p.contenu|default(p.bodyHtml|default(null)) %}
+{% set titre_encart = p.titreEncart|default(p.infoBoxTitle|default('Infos')) %}
+{% set email = p.emailAffiche|default(p.contactEmail|default(null)) %}
+{% set tel = p.telephoneAffiche|default(p.contactPhone|default(null)) %}
+{% set tel_href = p.lienTelephone|default(p.contactPhoneHref|default(null)) %}
+{% set disclaimer = p.mentionSoumission|default(p.formDisclaimer|default(null)) %}
+
+<section{% if section.anchorId %} id="{{ section.anchorId }}"{% endif %} class="border-t border-ink/15">
+    <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        <div class="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-start">
+
+            <div class="lg:col-span-5">
+                {% if titre %}
+                    <h2 class="font-display text-3xl font-black tracking-tight sm:text-4xl">{{ titre|e }}</h2>
+                {% endif %}
+
+                {% if intro %}
+                    <p class="mt-4 text-sm leading-relaxed text-ink/70">{{ intro|nl2br|e }}</p>
+                {% endif %}
+
+                {% if contenu %}
+                    <div class="mt-6 max-w-xl text-base leading-relaxed text-ink/80">{{ contenu|raw }}</div>
+                {% endif %}
+
+                {% if email or tel %}
+                    <div class="mt-8 border border-ink/15 p-5">
+                        <div class="text-xs font-semibold uppercase tracking-widest text-ink/70">{{ titre_encart|e }}</div>
+                        <div class="mt-3 space-y-2 text-sm">
+                            {% if email %}
+                                <a class="block transition-colors duration-200 hover:text-accent focus:text-accent"
+                                   href="mailto:{{ email|e('html_attr') }}">{{ email|e }}</a>
+                            {% endif %}
+                            {% if tel %}
+                                {% set href_tel = tel_href ?: tel|replace({' ': '', '.': '', '-': '', '(': '', ')': ''}) %}
+                                <a class="block transition-colors duration-200 hover:text-accent focus:text-accent"
+                                   href="tel:{{ href_tel|e('html_attr') }}">{{ tel|e }}</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="lg:col-span-7">
+                <form class="border border-ink p-6 sm:p-8"
+                      action="{{ path('app_contact_submit') }}"
+                      method="post"
+                      aria-label="Formulaire de contact"
+                >
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('contact_submit') }}"/>
+
+                    <div class="grid grid-cols-1 gap-8 sm:grid-cols-2">
+                        <label class="block">
+                            <span class="text-xs font-semibold uppercase tracking-widest text-ink/70">Nom</span>
+                            <input required name="name" type="text" placeholder="Votre nom"
+                                   class="mt-3 w-full border-0 border-b border-ink bg-transparent px-0 py-3 font-body text-base outline-none transition-colors duration-200 placeholder:text-ink/35 focus:border-accent">
+                        </label>
+                        <label class="block">
+                            <span class="text-xs font-semibold uppercase tracking-widest text-ink/70">Email</span>
+                            <input required name="email" type="email" placeholder="vous@exemple.com"
+                                   class="mt-3 w-full border-0 border-b border-ink bg-transparent px-0 py-3 font-body text-base outline-none transition-colors duration-200 placeholder:text-ink/35 focus:border-accent">
+                        </label>
+                    </div>
+
+                    <label class="mt-8 block">
+                        <span class="text-xs font-semibold uppercase tracking-widest text-ink/70">Sujet</span>
+                        <input name="subject" type="text" placeholder="Site, identité, refonte…"
+                               class="mt-3 w-full border-0 border-b border-ink bg-transparent px-0 py-3 font-body text-base outline-none transition-colors duration-200 placeholder:text-ink/35 focus:border-accent">
+                    </label>
+
+                    <label class="mt-8 block">
+                        <span class="text-xs font-semibold uppercase tracking-widest text-ink/70">Message</span>
+                        <textarea required name="message" rows="5"
+                                  placeholder="Décrivez le contexte, l’objectif, et une contrainte clé."
+                                  class="mt-3 w-full resize-none border-0 border-b border-ink bg-transparent px-0 py-3 font-body text-base outline-none transition-colors duration-200 placeholder:text-ink/35 focus:border-accent"></textarea>
+                    </label>
+
+                    <div class="mt-10 flex flex-wrap items-center justify-between gap-4">
+                        <p class="text-xs text-ink/60">
+                            {{ (disclaimer ?: 'En envoyant, vous acceptez un retour par email.')|e }}
+                        </p>
+                        <button type="submit"
+                                class="inline-flex items-center justify-center border border-ink bg-ink px-5 py-3 text-sm font-semibold text-paper transition-colors duration-200 hover:border-accent hover:bg-accent focus:border-accent focus:bg-accent">
+                            Envoyer
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</section>
